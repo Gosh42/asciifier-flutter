@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:image_picker/image_picker.dart';
 
 void main() {
   runApp(const MyApp());
@@ -30,7 +31,48 @@ class GeneratorPage extends StatefulWidget {
 class _GeneratorPageState extends State<GeneratorPage> {
   //const GeneratorPage({Key? key}) : super(key: key);
   bool darkMode = false;
+
+  XFile? selectedImage;
+  String previewText = '[ASCII ART HERE]';
   double previewFontSize = 4;
+
+
+  Future _pickGalleryImage(BuildContext context) async {
+    final galleryImage = await ImagePicker().pickImage(source: ImageSource.gallery);
+    setState(() {
+      selectedImage = galleryImage;
+    });
+
+    String funnytext;
+    if(selectedImage != null) {
+      funnytext = "Image selected successfully!!";
+      previewText = selectedImage!.name;
+    } else {
+      funnytext = "Image wasn't selected.";
+      previewText = '[ASCII ART HERE]';
+    }
+
+    showDialog<void>(
+        context: context,
+        builder: (BuildContext context)
+    {
+      return AlertDialog(
+        title: const Text('Notice'),
+        content: SingleChildScrollView(
+            child: Text(funnytext)
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+            child: const Text('i don\'t care')
+          )
+        ],
+      );
+    }
+  );
+}
 
   @override
   Widget build(BuildContext context) {
@@ -43,28 +85,7 @@ class _GeneratorPageState extends State<GeneratorPage> {
           children: [
             ElevatedButton(
               onPressed: () {
-                showDialog(
-                  context: context,
-                  builder: (BuildContext context) => Dialog(
-                    child: Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Text("imagine image being selected"),
-                          const SizedBox(height: 15),
-                          TextButton(
-                            onPressed: () {
-                              Navigator.pop(context);
-                            },
-                            child: const Text("i don't care")
-                          )
-                        ]
-                      )
-                    )
-                  )
-                );
+                _pickGalleryImage(context);
               },
               child: const Text("Select an image")
             ),
@@ -110,9 +131,9 @@ class _GeneratorPageState extends State<GeneratorPage> {
               padding: const EdgeInsets.all(8.0),
               child: TextFormField(
                 readOnly: true,
-                decoration: const InputDecoration(
-                  hintText: "[ASCII ART HERE]",
-                  border: OutlineInputBorder()
+                decoration: InputDecoration(
+                  hintText: previewText,
+                  border: const OutlineInputBorder()
                 ),
                 minLines: 9,
                 maxLines: 9,
@@ -195,7 +216,7 @@ class _MyHomePageState extends State<MyHomePage> {
         page = GeneratorPage();
         break;
       case 1:
-        page = SavesPage();
+        page = const SavesPage();
         break;
       default:
         throw UnimplementedError("How did we get here?");
