@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
@@ -36,6 +38,50 @@ class _GeneratorPageState extends State<GeneratorPage> {
   String previewText = '[ASCII ART HERE]';
   double previewFontSize = 4;
 
+  bool isLinked = false;
+  IconData linkIcon = Icons.link_off;
+
+  double width = 1;
+  double height = 1;
+
+  final _textControllerWidth = TextEditingController();
+  void _onWidthChanged(){
+    double newWidth = max(double.parse(_textControllerWidth.text), 1);
+    setState(() {
+      if(isLinked){
+        height *= (newWidth / width);
+        String heightStr = height.round().toString();
+
+        _textControllerHeight.removeListener(_onHeightChanged);
+        _textControllerHeight.value = TextEditingValue(
+          text: heightStr,
+          selection: TextSelection.fromPosition(TextPosition(offset: heightStr.length))
+        );
+        _textControllerHeight.addListener(_onHeightChanged);
+      }
+      width = newWidth;
+    });
+  }
+  final _textControllerHeight = TextEditingController();
+  void _onHeightChanged(){
+    double newHeight = max(double.parse(_textControllerHeight.text), 1);
+    setState(() {
+      if(isLinked){
+        width *= (newHeight / height);
+        String widthStr = width.round().toString();
+
+        _textControllerWidth.removeListener(_onWidthChanged);
+        _textControllerWidth.value = TextEditingValue(
+            text: widthStr,
+            selection: TextSelection.fromPosition(TextPosition(offset: widthStr.length))
+        );
+        _textControllerWidth.addListener(_onWidthChanged);
+      }
+      height = newHeight;
+    });
+  }
+
+
 
   Future _pickGalleryImage(BuildContext context) async {
     final galleryImage = await ImagePicker().pickImage(source: ImageSource.gallery);
@@ -54,8 +100,7 @@ class _GeneratorPageState extends State<GeneratorPage> {
 
     showDialog<void>(
         context: context,
-        builder: (BuildContext context)
-    {
+        builder: (BuildContext context) {
       return AlertDialog(
         title: const Text('Notice'),
         content: SingleChildScrollView(
@@ -73,6 +118,21 @@ class _GeneratorPageState extends State<GeneratorPage> {
     }
   );
 }
+
+  @override
+  void initState() {
+    super.initState();
+
+    _textControllerWidth.addListener(_onWidthChanged);
+    _textControllerHeight.addListener(_onHeightChanged);
+  }
+
+  @override
+  void dispose(){
+    _textControllerWidth.dispose();
+    _textControllerHeight.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -95,21 +155,59 @@ class _GeneratorPageState extends State<GeneratorPage> {
                 const SizedBox(width: 10),
                 Flexible(
                   child: TextField(
+                    controller: _textControllerWidth,
                     keyboardType: TextInputType.number,
                     inputFormatters: <TextInputFormatter>[FilteringTextInputFormatter.digitsOnly],
                     decoration: const InputDecoration(
-                      hintText: "Width"
+                      labelText: "Width"
                     ),
+                    /*onChanged: (str){
+                      double newWidth = double.parse(str);
+                      setState(() {
+                        if(isLinked){
+                          height *= (newWidth / width);
+                        }
+                        width = newWidth;
+                        _textControllerWidth.value = TextEditingValue(
+                          text: str,
+                          selection: TextSelection.fromPosition(TextPosition(offset: str.length))
+                        );
+                      });
+                    },*/
                   ),
                 ),
-                IconButton(onPressed: (){}, icon: const Icon(Icons.link_off)),
+                IconButton(onPressed: (){
+                      setState(() {
+                        isLinked = !isLinked;
+                        if (isLinked) {
+                          linkIcon = Icons.link;
+                        } else {
+                          linkIcon = Icons.link_off;
+                      }
+                    });
+                  }, icon: Icon(linkIcon)
+                ),
                 Flexible(
                   child: TextField(
+                    controller: _textControllerHeight,
                     keyboardType: TextInputType.number,
                     inputFormatters: <TextInputFormatter>[FilteringTextInputFormatter.digitsOnly],
                     decoration: const InputDecoration(
-                      hintText: "Height"
+                      labelText: "Height"
                     ),
+                    /*onChanged: (str){
+                      double newHeight = double.parse(str);
+                      setState(() {
+                        if(isLinked){
+                          width *= (newHeight / height);
+                        }
+                        height = newHeight;
+                        _textControllerHeight.value = TextEditingValue(
+                          text: str,
+                          selection: TextSelection.fromPosition(TextPosition(offset: str.length))
+                        );
+                      });
+                    },*/
                   ),
                 ),
                 const SizedBox(width: 10)
