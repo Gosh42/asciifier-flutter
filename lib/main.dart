@@ -1,8 +1,9 @@
 import 'dart:math';
-
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
+
 
 void main() {
   runApp(const MyApp());
@@ -34,7 +35,7 @@ class _GeneratorPageState extends State<GeneratorPage> {
   //const GeneratorPage({Key? key}) : super(key: key);
   bool darkMode = false;
 
-  XFile? selectedImage;
+  File? selectedImage;
   String previewText = '[ASCII ART HERE]';
   double previewFontSize = 4;
 
@@ -86,13 +87,13 @@ class _GeneratorPageState extends State<GeneratorPage> {
   Future _pickGalleryImage(BuildContext context) async {
     final galleryImage = await ImagePicker().pickImage(source: ImageSource.gallery);
     setState(() {
-      selectedImage = galleryImage;
+      selectedImage = galleryImage != null ? File(galleryImage.path) : null;
     });
 
     String funnytext;
     if(selectedImage != null) {
       funnytext = "Image selected successfully!!";
-      previewText = selectedImage!.name;
+      previewText = selectedImage!.path;
     } else {
       funnytext = "Image wasn't selected.";
       previewText = '[ASCII ART HERE]';
@@ -143,11 +144,25 @@ class _GeneratorPageState extends State<GeneratorPage> {
       body: Center(
         child: Column(
           children: [
-            ElevatedButton(
-              onPressed: () {
-                _pickGalleryImage(context);
-              },
-              child: const Text("Select an image")
+            Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () {
+                      _pickGalleryImage(context);
+                    },
+                    child: const Text("Select an image")
+                  ),
+                ),
+                SizedBox(
+                  width: 125,
+                  child: Image(
+                    image: selectedImage == null
+                        ? const NetworkImage('https://upload.wikimedia.org/wikipedia/en/7/73/Trollface.png')
+                        : FileImage(selectedImage!) as ImageProvider
+                    ),
+                )
+              ],
             ),
             const SizedBox(height: 20),
             Row(
@@ -161,19 +176,6 @@ class _GeneratorPageState extends State<GeneratorPage> {
                     decoration: const InputDecoration(
                       labelText: "Width"
                     ),
-                    /*onChanged: (str){
-                      double newWidth = double.parse(str);
-                      setState(() {
-                        if(isLinked){
-                          height *= (newWidth / width);
-                        }
-                        width = newWidth;
-                        _textControllerWidth.value = TextEditingValue(
-                          text: str,
-                          selection: TextSelection.fromPosition(TextPosition(offset: str.length))
-                        );
-                      });
-                    },*/
                   ),
                 ),
                 IconButton(onPressed: (){
@@ -195,19 +197,6 @@ class _GeneratorPageState extends State<GeneratorPage> {
                     decoration: const InputDecoration(
                       labelText: "Height"
                     ),
-                    /*onChanged: (str){
-                      double newHeight = double.parse(str);
-                      setState(() {
-                        if(isLinked){
-                          width *= (newHeight / height);
-                        }
-                        height = newHeight;
-                        _textControllerHeight.value = TextEditingValue(
-                          text: str,
-                          selection: TextSelection.fromPosition(TextPosition(offset: str.length))
-                        );
-                      });
-                    },*/
                   ),
                 ),
                 const SizedBox(width: 10)
