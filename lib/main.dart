@@ -9,6 +9,7 @@ void main() {
   runApp(const MyApp());
 }
 
+
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
@@ -26,6 +27,67 @@ class MyApp extends StatelessWidget {
   }
 }
 
+
+class AsciiPreview extends StatefulWidget{
+  final String titleText;
+  final String text;
+  double fontSize;
+
+  AsciiPreview({
+    Key? key,
+    required this.titleText,
+    required this.text,
+    this.fontSize = 10
+  }): super(key: key);
+
+  @override
+  State<AsciiPreview> createState() => _AsciiPreviewState();
+}
+
+class _AsciiPreviewState extends State<AsciiPreview> {
+  @override
+  Widget build(BuildContext buildContext) {
+    final theme = Theme.of(context);
+    return Card(
+      color: theme.colorScheme.surface,
+      elevation: 5,
+      child: ExpansionTile(
+        title: Text(widget.titleText),
+
+          children: [
+            Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: TextFormField(
+                  readOnly: true,
+                  style: TextStyle(
+                    fontSize: widget.fontSize
+                  ),
+                  decoration: InputDecoration(
+                      hintText: widget.text,
+                      border: const OutlineInputBorder()
+                  ),
+                  minLines: 9,
+                  maxLines: 9,
+                )
+            ),
+            Slider(
+              value: widget.fontSize,
+              min: 0,
+              max: 20,
+              onChanged: (double val) {
+                setState( () {
+                  widget.fontSize = val;
+                });
+              }
+            ),
+          ],
+
+      ),
+    );
+  }
+}
+
+
 class GeneratorPage extends StatefulWidget {
   @override
   State<GeneratorPage> createState() => _GeneratorPageState();
@@ -33,6 +95,7 @@ class GeneratorPage extends StatefulWidget {
 
 class _GeneratorPageState extends State<GeneratorPage> {
   //const GeneratorPage({Key? key}) : super(key: key);
+
   bool darkMode = false;
 
   File? selectedImage;
@@ -81,8 +144,6 @@ class _GeneratorPageState extends State<GeneratorPage> {
       height = newHeight;
     });
   }
-
-
 
   Future _pickGalleryImage(BuildContext context) async {
     final galleryImage = await ImagePicker().pickImage(source: ImageSource.gallery);
@@ -137,134 +198,126 @@ class _GeneratorPageState extends State<GeneratorPage> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
       appBar: AppBar(
           title: const Text("Generator"),
       ),
-      body: Center(
-        child: Column(
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: () {
-                      _pickGalleryImage(context);
-                    },
-                    child: const Text("Select an image")
+      body: SingleChildScrollView(
+        child: Center(
+          child: Column(
+            children: [
+              Card(
+                color: theme.colorScheme.surface,
+                elevation: 5,
+                child: InkWell(
+                  onTap: () {
+                    _pickGalleryImage(context);
+                  },
+                  highlightColor: theme.colorScheme.primaryContainer,
+                  child: Row(
+                    children: [
+                      const Expanded(
+                        child:  Text("Select an image", textAlign: TextAlign.center)
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: SizedBox(
+                          width: 125,
+                          child: Image(
+                              image: selectedImage == null
+                                  ? const NetworkImage('https://upload.wikimedia.org/wikipedia/en/7/73/Trollface.png')
+                                  : FileImage(selectedImage!) as ImageProvider
+                          ),
+                        ),
+                      )
+                    ],
                   ),
                 ),
-                SizedBox(
-                  width: 125,
-                  child: Image(
-                    image: selectedImage == null
-                        ? const NetworkImage('https://upload.wikimedia.org/wikipedia/en/7/73/Trollface.png')
-                        : FileImage(selectedImage!) as ImageProvider
-                    ),
-                )
-              ],
-            ),
-            const SizedBox(height: 20),
-            Row(
-              children: [
-                const SizedBox(width: 10),
-                Flexible(
-                  child: TextField(
-                    controller: _textControllerWidth,
-                    keyboardType: TextInputType.number,
-                    inputFormatters: <TextInputFormatter>[FilteringTextInputFormatter.digitsOnly],
-                    decoration: const InputDecoration(
-                      labelText: "Width"
+              ),
+
+              const SizedBox(height: 20),
+              Row(
+                children: [
+                  const SizedBox(width: 10),
+                  Flexible(
+                    child: TextField(
+                      controller: _textControllerWidth,
+                      keyboardType: TextInputType.number,
+                      inputFormatters: <TextInputFormatter>[FilteringTextInputFormatter.digitsOnly],
+                      decoration: const InputDecoration(
+                        labelText: "Width"
+                      ),
                     ),
                   ),
-                ),
-                IconButton(onPressed: (){
-                      setState(() {
-                        isLinked = !isLinked;
-                        if (isLinked) {
-                          linkIcon = Icons.link;
-                        } else {
-                          linkIcon = Icons.link_off;
-                      }
-                    });
-                  }, icon: Icon(linkIcon)
-                ),
-                Flexible(
-                  child: TextField(
-                    controller: _textControllerHeight,
-                    keyboardType: TextInputType.number,
-                    inputFormatters: <TextInputFormatter>[FilteringTextInputFormatter.digitsOnly],
-                    decoration: const InputDecoration(
-                      labelText: "Height"
+                  IconButton(onPressed: (){
+                        setState(() {
+                          isLinked = !isLinked;
+                          if (isLinked) {
+                            linkIcon = Icons.link;
+                          } else {
+                            linkIcon = Icons.link_off;
+                        }
+                      });
+                    }, icon: Icon(linkIcon)
+                  ),
+                  Flexible(
+                    child: TextField(
+                      controller: _textControllerHeight,
+                      keyboardType: TextInputType.number,
+                      inputFormatters: <TextInputFormatter>[FilteringTextInputFormatter.digitsOnly],
+                      decoration: const InputDecoration(
+                        labelText: "Height"
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(width: 10)
-              ]
-            ),
-            const SizedBox(height: 20),
-            SwitchListTile(
-              value: darkMode,
-              onChanged: (bool val) {
-                setState(() {
-                  darkMode = val;
-                });
-              },
-              title: const Text('Reverse the Gradient...'),
-              subtitle: const Text('for Dark Mode'),
-              secondary: const Icon(Icons.dark_mode_outlined),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: TextFormField(
-                readOnly: true,
-                decoration: InputDecoration(
-                  hintText: previewText,
-                  border: const OutlineInputBorder()
-                ),
-                minLines: 9,
-                maxLines: 9,
-              )
-            ),
-            Slider(
-              value: previewFontSize,
-              min: 0,
-              max: 20,
-              onChanged: (double val) {
-                setState( () {
-                  previewFontSize = val;
-                });
-              }
-            ),
-            ElevatedButton(
-              onPressed: () {
-                showDialog(
-                  context: context,
-                  builder: (BuildContext context) => Dialog(
-                    child: Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Text("imagine ascii art being saved"),
-                          const SizedBox(height: 15),
-                          TextButton(
-                            onPressed: () {
-                              Navigator.pop(context);
-                            },
-                            child: const Text("i don't care")
-                          )
-                        ]
+                  const SizedBox(width: 10)
+                ]
+              ),
+              const SizedBox(height: 20),
+              SwitchListTile(
+                value: darkMode,
+                onChanged: (bool val) {
+                  setState(() {
+                    darkMode = val;
+                  });
+                },
+                title: const Text('Reverse the Gradient...'),
+                subtitle: const Text('for Dark Mode'),
+                secondary: const Icon(Icons.dark_mode_outlined),
+              ),
+              AsciiPreview(titleText: 'Result', text: previewText),
+              ElevatedButton(
+                onPressed: () {
+                  showDialog(
+                    context: context,
+                    builder: (BuildContext context) => Dialog(
+                      child: Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Text("imagine ascii art being saved"),
+                            const SizedBox(height: 15),
+                            TextButton(
+                              onPressed: () {
+                                Navigator.pop(context);
+                              },
+                              child: const Text("i don't care")
+                            )
+                          ]
+                        )
                       )
                     )
-                  )
-                );
-              },
-              child: const Text("Save")
-            ),
-          ]
-        )
+                  );
+                },
+                child: const Text("Save")
+              ),
+            ]
+          )
+        ),
       )
     );
   }
