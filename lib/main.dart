@@ -227,7 +227,7 @@ class _GeneratorPageState extends State<GeneratorPage> {
                           width: 125,
                           child: Image(
                               image: selectedImage == null
-                                  ? const NetworkImage('https://upload.wikimedia.org/wikipedia/en/7/73/Trollface.png')
+                                  ? const AssetImage('assets/placeholder.png')
                                   : FileImage(selectedImage!) as ImageProvider
                           ),
                         ),
