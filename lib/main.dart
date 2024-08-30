@@ -1,9 +1,11 @@
 import 'dart:math';
 import 'dart:io';
+import 'package:asciifier/asciifier.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
-
+import 'package:path_provider/path_provider.dart';
+import 'package:image/image.dart' as img_lib;
 
 void main() {
   runApp(const MyApp());
@@ -53,7 +55,6 @@ class _AsciiPreviewState extends State<AsciiPreview> {
       elevation: 5,
       child: ExpansionTile(
         title: Text(widget.titleText),
-
           children: [
             Padding(
                 padding: const EdgeInsets.all(8.0),
@@ -67,7 +68,7 @@ class _AsciiPreviewState extends State<AsciiPreview> {
                       border: const OutlineInputBorder()
                   ),
                   minLines: 9,
-                  maxLines: 9,
+                  maxLines: 1000,
                 )
             ),
             Slider(
@@ -95,9 +96,10 @@ class GeneratorPage extends StatefulWidget {
 
 class _GeneratorPageState extends State<GeneratorPage> {
   //const GeneratorPage({Key? key}) : super(key: key);
-
+  Asciifier ascii = Asciifier();
   bool darkMode = false;
 
+  late File placeholderImage;
   File? selectedImage;
   String previewText = '[ASCII ART HERE]';
   double previewFontSize = 4;
@@ -105,8 +107,8 @@ class _GeneratorPageState extends State<GeneratorPage> {
   bool isLinked = false;
   IconData linkIcon = Icons.link_off;
 
-  double width = 1;
-  double height = 1;
+  double width = 256;
+  double height = 256;
 
   final _textControllerWidth = TextEditingController();
   void _onWidthChanged(){
@@ -154,7 +156,10 @@ class _GeneratorPageState extends State<GeneratorPage> {
     String funnytext;
     if(selectedImage != null) {
       funnytext = "Image selected successfully!!";
-      previewText = selectedImage!.path;
+      debugPrint("asdsadasdasd $width");
+      ascii.setupImage(img_lib.decodeImage(selectedImage!.readAsBytesSync())!, width.round(), height.round());
+      ascii.makeAsciiArt();
+      previewText = ascii.result;
     } else {
       funnytext = "Image wasn't selected.";
       previewText = '[ASCII ART HERE]';
@@ -177,16 +182,30 @@ class _GeneratorPageState extends State<GeneratorPage> {
           )
         ],
       );
-    }
-  );
-}
+     }
+    );
+  }
+
+  void setPlaceholderImage(String path) async{
+    final byteData = await rootBundle.load('assets/$path');
+    final file = File('${(await getTemporaryDirectory()).path}/$path');
+    await file.create(recursive: true);
+    await file.writeAsBytes(byteData.buffer.asUint8List(byteData.offsetInBytes, byteData.lengthInBytes));
+
+    placeholderImage = file;
+  }
+
 
   @override
   void initState() {
     super.initState();
-
     _textControllerWidth.addListener(_onWidthChanged);
     _textControllerHeight.addListener(_onHeightChanged);
+
+    WidgetsBinding.instance.addPostFrameCallback((_) { 
+      setPlaceholderImage('assets/placeholder.png');
+      ascii.setupImage(img_lib.decodeImage(placeholderImage.readAsBytesSync())!, width.round(), height.round());
+    });
   }
 
   @override
@@ -282,11 +301,20 @@ class _GeneratorPageState extends State<GeneratorPage> {
                   setState(() {
                     darkMode = val;
                   });
+                  ascii.isGradientReversed = darkMode;
                 },
                 title: const Text('Reverse the Gradient...'),
                 subtitle: const Text('for Dark Mode'),
                 secondary: const Icon(Icons.dark_mode_outlined),
               ),
+              ElevatedButton(onPressed: () {
+                ascii.resizeImage(width.round(), height.round());
+                ascii.makeAsciiArt();
+                setState(() {
+                  previewText = ascii.result;
+                });
+              },
+                  child: const Text('Refresh')),
               AsciiPreview(titleText: 'Result', text: previewText),
               ElevatedButton(
                 onPressed: () {
